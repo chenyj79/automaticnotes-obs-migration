@@ -310,7 +310,7 @@ export ROCKETMQ_NAME_SERVER=localhost:9876
 
 ---
 
-## 🐳 Docker Compose 一键部署（推荐）
+## 🐳 Docker Compose 部署
 
 > 仅需 Docker Desktop + 3 步，无需安装 JDK / Maven / MySQL / Redis / RocketMQ / FFmpeg。
 
@@ -350,8 +350,6 @@ ASR_ALIYUN_ACCESS_KEY_ID=你的值
 ASR_ALIYUN_ACCESS_KEY_SECRET=你的值
 ASR_ALIYUN_APP_KEY=你的值
 ```
-
-> ⚠️ 所有 Key 都**自己去各平台申请**，不要跟同学共用，每人有独立免费额度。
 
 ### 第 2 步：启动
 
