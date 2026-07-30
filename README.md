@@ -310,13 +310,82 @@ export ROCKETMQ_NAME_SERVER=localhost:9876
 
 ---
 
-## 本地开发环境搭建
+## 🐳 Docker Compose 一键部署（推荐）
+
+> 仅需 Docker Desktop + 3 步，无需安装 JDK / Maven / MySQL / Redis / RocketMQ / FFmpeg。
+
+### 第 0 步：安装 Docker Desktop
+
+- Windows / macOS 从 [docker.com](https://www.docker.com/products/docker-desktop/) 下载安装
+- 如果国内拉镜像慢，Docker Desktop → Settings → Docker Engine → 配置镜像源：
+
+```json
+{
+  "registry-mirrors": [
+    "https://docker.1ms.run",
+    "https://docker.xuanyuan.me"
+  ]
+}
+```
+
+### 第 1 步：创建环境变量文件
+
+```bash
+cp .env.example .env
+```
+
+然后编辑 `.env`，填入你的 API Key（详见上方 **API Key 配置** 章节）：
+
+```env
+MYSQL_PASSWORD=root
+
+HUAWEICLOUD_OBS_ACCESS_KEY_ID=你的值
+HUAWEICLOUD_OBS_ACCESS_KEY_SECRET=你的值
+HUAWEICLOUD_OBS_BUCKET_NAME=你的值
+HUAWEICLOUD_OBS_ENDPOINT=obs.cn-east-3.myhuaweicloud.com
+
+DASHSCOPE_API_KEY=sk-你的值
+
+ASR_ALIYUN_ACCESS_KEY_ID=你的值
+ASR_ALIYUN_ACCESS_KEY_SECRET=你的值
+ASR_ALIYUN_APP_KEY=你的值
+```
+
+> ⚠️ 所有 Key 都**自己去各平台申请**，不要跟同学共用，每人有独立免费额度。
+
+### 第 2 步：启动
+
+```bash
+docker compose up -d
+```
+
+首次启动会自动拉取镜像、构建后端和前端，约 3~5 分钟。
+
+### 第 3 步：访问
+
+浏览器打开 **http://localhost:3000**，注册账号即可使用。
+
+### 常用命令
+
+```bash
+docker compose ps                   # 查看服务状态
+docker compose logs -f backend-svc  # 查看后端日志
+docker compose restart              # 重启所有服务
+docker compose down                 # 停止所有服务
+docker compose up -d --build        # 重新构建并启动
+```
+
+---
+
+## 本地开发环境搭建（手动）
+
+> 如需调试代码、逐个启动服务，而非一键 Docker 部署，参考以下步骤。
 
 ### 1. 克隆项目
 
 ```bash
-git clone <your-repo-url>
-cd AutomaticNotes
+git clone https://github.com/chenyj79/automaticnotes-obs-migration.git
+cd automaticnotes-obs-migration
 ```
 
 ### 2. 配置环境变量
@@ -366,17 +435,27 @@ npm run dev
 
 ## 常见问题
 
+### Q: Docker 启动后报 MySQL 端口 3306 冲突？
+
+本机已有 MySQL 占用端口，管理员 PowerShell 关闭即可：
+
+```bash
+Stop-Service MySQL80
+```
+
+也可以用 `Get-Service | Where-Object { $_.DisplayName -like "*mysql*" }` 查看本机 MySQL 服务名。
+
 ### Q: 后端启动报数据库连接错误？
 
-确认 MySQL 已启动，数据库 `test_db` 已创建，并且 `MYSQL_PASSWORD` 环境变量已设置。
+Docker 部署：检查 `.env` 中 `MYSQL_PASSWORD` 是否设置。
+手动部署：确认 MySQL 已启动，数据库已创建。
 
 ### Q: 视频上传后没有开始转写？
 
 检查：
 1. RocketMQ 是否正常运行
-2. OSS 配置是否正确（视频需先上传至 OSS）
+2. OBS 配置是否正确（视频需先上传至 OBS）
 3. 通义听悟 AppKey 和 AccessKey 是否配置
-4. 服务器是否安装了 FFmpeg
 
 ### Q: 前端 API 请求返回 404？
 
