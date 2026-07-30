@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+faster-whisper>=1.0.0
+requests
+pydantic
+funasr
+modelscope
+torch
+torchaudio
+opencc

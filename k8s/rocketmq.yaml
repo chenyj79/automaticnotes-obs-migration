@@ -1,0 +1,131 @@
+# =============================================
+# RocketMQ - NameServer + Broker
+# =============================================
+
+# ----- NameServer -----
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rocketmq-namesrv
+  namespace: autonotes
+  labels:
+    app: rocketmq-namesrv
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rocketmq-namesrv
+  template:
+    metadata:
+      labels:
+        app: rocketmq-namesrv
+    spec:
+      containers:
+        - name: namesrv
+          image: crpi-dke0j5qt1m8pkeyd.cn-shanghai.personal.cr.aliyuncs.com/autonotes-k8s/rocketmq:5.3.2
+          command: ["sh", "mqnamesrv"]
+          ports:
+            - containerPort: 9876
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 768Mi
+          env:
+            - name: JAVA_OPT_EXT
+              value: "-Xms256m -Xmx512m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rocketmq-namesrv-svc
+  namespace: autonotes
+spec:
+  selector:
+    app: rocketmq-namesrv
+  ports:
+    - port: 9876
+      targetPort: 9876
+
+---
+# ----- Broker -----
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rocketmq-broker-config
+  namespace: autonotes
+data:
+  broker.conf: |
+    brokerClusterName = DefaultCluster
+    brokerName = broker-0
+    brokerId = 0
+    deleteWhen = 04
+    fileReservedTime = 48
+    brokerRole = ASYNC_MASTER
+    flushDiskType = ASYNC_FLUSH
+    namesrvAddr = rocketmq-namesrv-svc:9876
+    autoCreateTopicEnable = true
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rocketmq-broker
+  namespace: autonotes
+  labels:
+    app: rocketmq-broker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rocketmq-broker
+  template:
+    metadata:
+      labels:
+        app: rocketmq-broker
+    spec:
+      containers:
+        - name: broker
+          image: crpi-dke0j5qt1m8pkeyd.cn-shanghai.personal.cr.aliyuncs.com/autonotes-k8s/rocketmq:5.3.2
+          command: ["sh", "mqbroker", "-c", "/opt/rocketmq/conf/broker.conf"]
+          ports:
+            - containerPort: 10911
+            - containerPort: 10909
+          volumeMounts:
+            - name: broker-config
+              mountPath: /opt/rocketmq/conf/broker.conf
+              subPath: broker.conf
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          env:
+            - name: JAVA_OPT_EXT
+              value: "-Xms256m -Xmx512m"
+      volumes:
+        - name: broker-config
+          configMap:
+            name: rocketmq-broker-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rocketmq-broker-svc
+  namespace: autonotes
+spec:
+  selector:
+    app: rocketmq-broker
+  ports:
+    - name: broker
+      port: 10911
+      targetPort: 10911
+    - name: fast
+      port: 10909
+      targetPort: 10909

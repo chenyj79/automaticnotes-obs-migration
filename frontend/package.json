@@ -1,0 +1,62 @@
+{
+  "name": "frontend",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "run-p type-check \"build-only {@}\" --",
+    "preview": "vite preview",
+    "build-only": "vite build",
+    "type-check": "vue-tsc --build",
+    "lint": "run-s lint:*",
+    "lint:oxlint": "oxlint . --fix",
+    "lint:eslint": "eslint . --fix --cache",
+    "format": "prettier --write --experimental-cli src/"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.3.2",
+    "@iktakahiro/markdown-it-katex": "^4.0.1",
+    "@m2d/core": "^1.7.1",
+    "@m2d/math": "^0.0.6",
+    "@types/markdown-it": "^14.1.2",
+    "axios": "^1.13.6",
+    "docx": "^9.6.1",
+    "element-plus": "^2.13.3",
+    "html2pdf.js": "^0.14.0",
+    "katex": "^0.16.38",
+    "markdown-it": "^14.1.1",
+    "marked": "^17.0.4",
+    "marked-katex-extension": "^5.1.7",
+    "md-editor-v3": "^6.4.0",
+    "mdast-util-from-markdown": "^2.0.3",
+    "mdast-util-math": "^3.0.0",
+    "micromark-extension-math": "^3.1.0",
+    "pinia": "^3.0.4",
+    "remark-math": "^6.0.0",
+    "vue": "^3.5.29",
+    "vue-router": "^5.0.3"
+  },
+  "devDependencies": {
+    "@tsconfig/node24": "^24.0.4",
+    "@types/node": "^24.11.0",
+    "@vitejs/plugin-vue": "^6.0.0",
+    "@vue/eslint-config-typescript": "^14.7.0",
+    "@vue/tsconfig": "^0.8.1",
+    "eslint": "^10.0.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-oxlint": "~1.50.0",
+    "eslint-plugin-vue": "~10.8.0",
+    "jiti": "^2.6.1",
+    "npm-run-all2": "^8.0.4",
+    "oxlint": "~1.50.0",
+    "prettier": "3.8.1",
+    "typescript": "~5.9.3",
+    "vite": "^6.0.0",
+    "vite-plugin-vue-devtools": "^8.0.6",
+    "vue-tsc": "^3.2.5"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  }
+}

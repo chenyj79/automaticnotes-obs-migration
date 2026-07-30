@@ -1,0 +1,84 @@
+# =============================================
+# Whisper ASR Service - Deployment + Service
+# =============================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: whisper
+  namespace: autonotes
+  labels:
+    app: whisper
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: whisper
+  template:
+    metadata:
+      labels:
+        app: whisper
+    spec:
+      containers:
+        - name: whisper
+          image: crpi-dke0j5qt1m8pkeyd.cn-shanghai.personal.cr.aliyuncs.com/autonotes-k8s/automatic-notes-whisper:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          env:
+            - name: WHISPER_MODEL
+              value: "large-v3-turbo"
+            - name: DEVICE
+              value: "cuda"
+            - name: COMPUTE_TYPE
+              value: "int8_float16"
+            - name: DOWNLOAD_TIMEOUT
+              value: "600"
+            - name: BATCH_SIZE
+              value: "16"
+            - name: CONCURRENT_WORKERS
+              value: "2"
+          resources:
+            requests:
+              cpu: 500m
+              memory: 4Gi
+            limits:
+              cpu: "4"
+              memory: 8Gi
+          # 就绪探针 - 使用 /health 接口
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          # 存活探针 - 宽松配置，因为推理期间可能长时间无响应
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 5
+          # 启动探针 - 模型加载可能需要较长时间
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 30
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whisper-svc
+  namespace: autonotes
+spec:
+  selector:
+    app: whisper
+  ports:
+    - port: 8000
+      targetPort: 8000

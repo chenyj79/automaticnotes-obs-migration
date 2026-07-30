@@ -1,0 +1,152 @@
+# =============================================
+# AutomaticNotes - Docker Compose 本地部署
+# =============================================
+#
+# 使用方法：
+#   1. 复制 .env.example 为 .env 并填入你的 API Key
+#   2. 执行: docker compose up -d
+#   3. 访问: http://localhost:3000
+#
+# 服务依赖关系：
+#   MySQL → Redis → RocketMQ → 后端 → 前端
+# =============================================
+
+services:
+  # ==================== MySQL ====================
+  mysql:
+    image: mysql:8.0
+    container_name: autonotes-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD:-root}
+      MYSQL_DATABASE: automatic_notes
+      LANG: C.UTF-8
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_PASSWORD:-root}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # ==================== Redis Stack ====================
+  redis:
+    image: redis/redis-stack:latest
+    container_name: autonotes-redis
+    ports:
+      - "6379:6379"
+      - "8001:8001"   # RedisInsight 管理界面
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  # ==================== RocketMQ NameServer ====================
+  rocketmq-namesrv:
+    image: apache/rocketmq:5.3.1
+    container_name: autonotes-namesrv
+    command: ["sh", "mqnamesrv"]
+    ports:
+      - "9876:9876"
+    environment:
+      JAVA_OPT_EXT: "-Xms256m -Xmx512m -server"
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'ss -tlnp | grep 9876 || netstat -tlnp | grep 9876 || echo ok'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  # ==================== RocketMQ Broker ====================
+  rocketmq-broker:
+    image: apache/rocketmq:5.3.1
+    container_name: autonotes-broker
+    command: ["sh", "mqbroker", "-c", "/home/rocketmq/rocketmq-5.3.1/conf/broker.conf"]
+    ports:
+      - "10911:10911"
+      - "10909:10909"
+    environment:
+      JAVA_OPT_EXT: "-Xms512m -Xmx512m -server"
+    volumes:
+      - ./broker-docker.conf:/home/rocketmq/rocketmq-5.3.1/conf/broker.conf
+    depends_on:
+      rocketmq-namesrv:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'ss -tlnp | grep 10911 || netstat -tlnp | grep 10911 || echo ok'"]
+      interval: 15s
+      timeout: 10s
+      retries: 15
+      start_period: 20s
+    restart: unless-stopped
+
+  # ==================== 后端 Spring Boot ====================
+  backend-svc:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: autonotes-backend
+    # 覆盖 Dockerfile 的 ENTRYPOINT，使用默认 profile（非 prod），通过环境变量注入配置
+    entrypoint: ["java", "-jar", "app.jar"]
+    ports:
+      - "8080:8080"
+    environment:
+      # 数据库
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/automatic_notes?characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-root}
+
+      # Redis
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+
+      # RocketMQ
+      ROCKETMQ_NAME_SERVER: rocketmq-namesrv:9876
+
+      # 华为云 OBS（必填）
+      HUAWEICLOUD_OBS_ACCESS_KEY_ID: ${HUAWEICLOUD_OBS_ACCESS_KEY_ID}
+      HUAWEICLOUD_OBS_ACCESS_KEY_SECRET: ${HUAWEICLOUD_OBS_ACCESS_KEY_SECRET}
+      HUAWEICLOUD_OBS_BUCKET_NAME: ${HUAWEICLOUD_OBS_BUCKET_NAME}
+      HUAWEICLOUD_OBS_ENDPOINT: ${HUAWEICLOUD_OBS_ENDPOINT:-obs.cn-north-4.myhuaweicloud.com}
+
+      # DashScope 通义千问（必填）
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY}
+
+      # 阿里云通义听悟 ASR（必填）
+      ASR_ALIYUN_ACCESS_KEY_ID: ${ASR_ALIYUN_ACCESS_KEY_ID}
+      ASR_ALIYUN_ACCESS_KEY_SECRET: ${ASR_ALIYUN_ACCESS_KEY_SECRET}
+      ASR_ALIYUN_APP_KEY: ${ASR_ALIYUN_APP_KEY}
+
+    volumes:
+      - uploads-data:/app/uploads
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ==================== 前端 Nginx ====================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: autonotes-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend-svc
+    restart: unless-stopped
+
+volumes:
+  mysql-data:
+  redis-data:
+  uploads-data:

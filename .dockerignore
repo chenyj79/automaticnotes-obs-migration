@@ -1,0 +1,10 @@
+# Backend .dockerignore
+.git
+.gitignore
+.idea
+*.iml
+frontend
+target
+k8s
+*.md
+*.tar.gz

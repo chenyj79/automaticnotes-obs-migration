@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: autonotes
+data:
+  SPRING_PROFILES_ACTIVE: "prod"
+  REDIS_PASSWORD: ""
+  ASR_WHISPER_URL: "http://172.29.7.217:8000/transcribe"
