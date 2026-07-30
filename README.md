@@ -253,6 +253,12 @@ export DASHSCOPE_API_KEY=sk-xxxxxxxxxxxxxxxx
   - 存储策略建议选择"公共读"以便前端直接访问视频
   - 记录 Endpoint（如 `obs.cn-north-4.myhuaweicloud.com`）
 - 在 [华为云 IAM 控制台](https://console.huaweicloud.com/console/?locale=zh-cn#/iam/users) 创建 AccessKey
+- **配置 CORS 跨域**（重要！前端浏览器直传 OBS，不配会报网络错误）：
+  1. 进入桶 → 权限控制 → 跨域资源共享（CORS）→ 创建规则
+  2. 填入：来源 `*`、方法 `GET, POST, PUT, HEAD`、头域 `*`、缓存 `100`
+- **修改上传文件的 ACL**（重要！通义听悟需要公开读取 OBS 文件才能转写）：
+  1. 进入桶 → `video/` 目录 → 点击文件名 → 权限标签 → 设为「公共读」
+  2. 如已上传多个文件，可逐文件修改，或后续上传会自动生效
 - 前端采用预签名 URL 直传方式，无需额外 STS 配置
 ```bash
 export HUAWEICLOUD_OBS_ACCESS_KEY_ID=your-access-key-id
