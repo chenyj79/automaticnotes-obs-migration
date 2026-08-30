@@ -102,7 +102,7 @@ services:
       # 数据库
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/automatic_notes?characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-root}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-root}
 
       # Redis
       SPRING_DATA_REDIS_HOST: redis
