@@ -21,11 +21,21 @@ services:
       MYSQL_DATABASE: automatic_notes
       LANG: C.UTF-8
     ports:
-      - "3306:3306"
+      - "13306:3306"
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_PASSWORD:-root}"]
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-p${MYSQL_PASSWORD:-root}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -38,7 +48,7 @@ services:
     container_name: autonotes-redis
     ports:
       - "6379:6379"
-      - "8001:8001"   # RedisInsight 管理界面
+      - "8001:8001" # RedisInsight 管理界面
     volumes:
       - redis-data:/data
     healthcheck:
@@ -58,7 +68,11 @@ services:
     environment:
       JAVA_OPT_EXT: "-Xms256m -Xmx512m -server"
     healthcheck:
-      test: ["CMD-SHELL", "sh -c 'ss -tlnp | grep 9876 || netstat -tlnp | grep 9876 || echo ok'"]
+      test:
+        [
+          "CMD-SHELL",
+          "sh -c 'ss -tlnp | grep 9876 || netstat -tlnp | grep 9876 || echo ok'",
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -69,7 +83,8 @@ services:
   rocketmq-broker:
     image: apache/rocketmq:5.3.1
     container_name: autonotes-broker
-    command: ["sh", "mqbroker", "-c", "/home/rocketmq/rocketmq-5.3.1/conf/broker.conf"]
+    command:
+      ["sh", "mqbroker", "-c", "/home/rocketmq/rocketmq-5.3.1/conf/broker.conf"]
     ports:
       - "10911:10911"
       - "10909:10909"
@@ -81,7 +96,11 @@ services:
       rocketmq-namesrv:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "sh -c 'ss -tlnp | grep 10911 || netstat -tlnp | grep 10911 || echo ok'"]
+      test:
+        [
+          "CMD-SHELL",
+          "sh -c 'ss -tlnp | grep 10911 || netstat -tlnp | grep 10911 || echo ok'",
+        ]
       interval: 15s
       timeout: 10s
       retries: 15
