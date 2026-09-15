@@ -123,6 +123,12 @@ public class ObsSignatureController {
             writer.append("Content-Disposition: form-data; name=\"AWSAccessKeyId\"\r\n\r\n");
             writer.append(sig.getAccessKeyId()).append("\r\n");
 
+            // Policy 中声明了 {"x-obs-acl":"public-read"} 条件，表单必须携带同名字段，
+            // 否则 OBS 会返回 403 Policy Condition failed（前端直传 FrameworkDetail.vue 同样会带此字段）
+            writer.append("--").append(boundary).append("\r\n");
+            writer.append("Content-Disposition: form-data; name=\"x-obs-acl\"\r\n\r\n");
+            writer.append("public-read").append("\r\n");
+
             writer.append("--").append(boundary).append("\r\n");
             writer.append("Content-Disposition: form-data; name=\"file\"; filename=\"test.txt\"\r\n");
             writer.append("Content-Type: text/plain\r\n\r\n");
