@@ -15,7 +15,9 @@ RUN mvn package -DskipTests -B
 FROM eclipse-temurin:17-jre-alpine
 
 # 安装 ffmpeg（项目依赖）
-RUN apk add --no-cache ffmpeg
+# Alpine 官方源 dl-cdn.alpinelinux.org 在国内被墙/DNS 解析失败，改用阿里云镜像源（保留镜像自带的版本路径）
+RUN sed -i 's#dl-cdn.alpinelinux.org#mirrors.aliyun.com#g' /etc/apk/repositories \
+    && apk add --no-cache ffmpeg
 
 WORKDIR /app
 

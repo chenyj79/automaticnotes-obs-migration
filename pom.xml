@@ -184,11 +184,13 @@
         </plugins>
     </build>
     <!--配置阿里云仓库下载-->
+    <!-- 仓库顺序会影响下载速度：Maven 按声明顺序取包，国内源必须排在 repo1.maven.org 前面，
+         否则每个依赖都会先卡在 maven central 上超时 -->
     <repositories>
         <repository>
-            <id>maven-central</id>
-            <name>Maven Central</name>
-            <url>https://repo1.maven.org/maven2/</url>
+            <id>nexus-aliyun</id>
+            <name>nexus-aliyun</name>
+            <url>https://maven.aliyun.com/nexus/content/groups/public/</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
@@ -208,9 +210,9 @@
             </snapshots>
         </repository>
         <repository>
-            <id>nexus-aliyun</id>
-            <name>nexus-aliyun</name>
-            <url>https://maven.aliyun.com/nexus/content/groups/public/</url>
+            <id>maven-central</id>
+            <name>Maven Central</name>
+            <url>https://repo1.maven.org/maven2/</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
