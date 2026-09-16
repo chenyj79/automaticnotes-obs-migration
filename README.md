@@ -1,3 +1,5 @@
+# 本仓库搬运而来
+
 # AutomaticNotes — AI 驱动的视频笔记平台
 
 > 📝 上传视频 → AI 自动语音转写 → 智能生成结构化笔记 → 知识框架管理
@@ -439,15 +441,19 @@ npm run dev
 
 ## 常见问题
 
-### Q: Docker 启动后报 MySQL 端口 3306 冲突？
+### Q: Docker 启动会有 MySQL 端口冲突问题吗？
 
-本机已有 MySQL 占用端口，管理员 PowerShell 关闭即可：
+`docker-compose.yml` 已将 MySQL 映射到宿主机 **13306**（容器内仍是 3306），因此不会与本机已安装的 MySQL（占用 3306）冲突。
+
+若仍报端口占用（例如本机也占用了 13306）：
 
 ```bash
-Stop-Service MySQL80
+netstat -ano | findstr :13306      # 查看占用该端口的进程
+Stop-Service MySQL80               # 或停掉本机 MySQL 服务（管理员 PowerShell）
 ```
 
 也可以用 `Get-Service | Where-Object { $_.DisplayName -like "*mysql*" }` 查看本机 MySQL 服务名。
+如需改回 3306，把 `docker-compose.yml` 中 mysql 服务的 `"13306:3306"` 改成 `"3306:3306"` 即可。
 
 ### Q: 后端启动报数据库连接错误？
 
