@@ -65,6 +65,34 @@ services:
       start_period: 10s
     restart: unless-stopped
 
+  # ==================== Whisper ASR Service ====================
+  whisper-svc:
+    build:
+      context: ./whisper-service
+      dockerfile: Dockerfile
+    container_name: autonotes-whisper
+    ports:
+      - "8002:8000"
+    environment:
+      # 默认 CPU 模式，有 GPU 的话改成 DEVICE=cuda / COMPUTE_TYPE=float16
+      DEVICE: cpu
+      COMPUTE_TYPE: int8
+      WHISPER_MODEL: large-v3-turbo
+      BATCH_SIZE: 8
+      GPU_DEVICES: "0"
+      DOWNLOAD_TIMEOUT: "600"
+      HF_ENDPOINT: https://hf-mirror.com
+    volumes:
+      - whisper-models:/app/models
+      - whisper-funasr-cache:/app/funasr-cache
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import requests; r=requests.get('http://localhost:8000/health'); exit(0 if r.status_code==200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    restart: unless-stopped
+
   # ==================== RocketMQ Broker ====================
   rocketmq-broker:
     image: apache/rocketmq:5.3.1
@@ -125,12 +153,18 @@ services:
       ASR_ALIYUN_ACCESS_KEY_SECRET: ${ASR_ALIYUN_ACCESS_KEY_SECRET}
       ASR_ALIYUN_APP_KEY: ${ASR_ALIYUN_APP_KEY}
 
+      # 本地 Whisper ASR
+      ASR_WHISPER_URL: http://whisper-svc:8000/transcribe
+      ASR_WHISPER_RESTORE_PUNC_URL: http://whisper-svc:8000/restore_punc
+
     volumes:
       - uploads-data:/app/uploads
     depends_on:
       mysql:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      whisper-svc:
         condition: service_healthy
     restart: unless-stopped
 
@@ -150,3 +184,5 @@ volumes:
   mysql-data:
   redis-data:
   uploads-data:
+  whisper-models:
+  whisper-funasr-cache:
