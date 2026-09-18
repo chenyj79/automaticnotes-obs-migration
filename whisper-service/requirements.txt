@@ -5,6 +5,4 @@ requests
 pydantic
 funasr
 modelscope
-torch
-torchaudio
 opencc

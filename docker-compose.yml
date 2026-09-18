@@ -58,6 +58,42 @@ services:
       retries: 5
     restart: unless-stopped
 
+  # ==================== Whisper ASR（本地转写，CPU 模式）====================
+  whisper-svc:
+    build:
+      context: ./whisper-service
+      dockerfile: Dockerfile
+    container_name: autonotes-whisper
+    ports:
+      - "8002:8000"
+    environment:
+      # CPU 模式（无 GPU 环境可跑；有 GPU 时可改 DEVICE=cuda / COMPUTE_TYPE=float16）
+      DEVICE: cpu
+      COMPUTE_TYPE: int8
+      BATCH_SIZE: 8
+      # 指向仓库内预下载的模型目录（由 download-model.ps1 生成）
+      WHISPER_MODEL: /app/models/models/mobiuslabsgmbh--faster-whisper-large-v3-turbo
+      DOWNLOAD_TIMEOUT: "600"
+      # 保留在线能力：本地模型缺失或需要换模型时，容器可走国内镜像下载
+      HF_ENDPOINT: https://hf-mirror.com
+      HF_HUB_DISABLE_XET: "1"
+    volumes:
+      - ./whisper-models:/app/models
+      - whisper-funasr-cache:/app/funasr-cache
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import requests; r=requests.get('http://localhost:8000/health'); exit(0 if r.status_code==200 else 1)",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+    restart: unless-stopped
+
   # ==================== RocketMQ NameServer ====================
   rocketmq-namesrv:
     image: apache/rocketmq:5.3.1
@@ -144,6 +180,10 @@ services:
       ASR_ALIYUN_ACCESS_KEY_SECRET: ${ASR_ALIYUN_ACCESS_KEY_SECRET}
       ASR_ALIYUN_APP_KEY: ${ASR_ALIYUN_APP_KEY}
 
+      # 本地 Whisper ASR（可选；阿里云失败时降级用）
+      ASR_WHISPER_URL: http://whisper-svc:8000/transcribe
+      ASR_WHISPER_RESTORE_PUNC_URL: http://whisper-svc:8000/restore_punc
+
     volumes:
       - uploads-data:/app/uploads
     depends_on:
@@ -169,3 +209,5 @@ volumes:
   mysql-data:
   redis-data:
   uploads-data:
+  # FunASR 标点模型缓存（约 300MB，容器首启自动从 ModelScope 下载）
+  whisper-funasr-cache:

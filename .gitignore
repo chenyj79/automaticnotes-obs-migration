@@ -43,3 +43,6 @@ build/
 
 ### Docs ###
 /docs/
+
+### Whisper 本地模型（约 1.6GB，不入库）###
+whisper-models/
