@@ -1,7 +1,7 @@
-FROM nvidia/cuda:12.1.1-runtime-ubuntu22.04
+FROM ubuntu:22.04
 
 LABEL maintainer="AutoNotes Team"
-LABEL description="Whisper ASR Service - Dual GPU accelerated speech-to-text with punctuation restoration"
+LABEL description="Whisper ASR Service - CPU speech-to-text with punctuation restoration"
 
 # 避免 tzdata 等包的交互式提示
 ENV DEBIAN_FRONTEND=noninteractive
@@ -27,11 +27,10 @@ WORKDIR /app
 
 # ============ 安装 Python 依赖 ============
 
-# 1. 先安装 PyTorch GPU 版本
-#    RTX 3090 Ti (Ampere SM86) 需要 CUDA 11.1+，此处匹配基础镜像的 CUDA 12.1
+# 1. 安装纯 CPU 版 PyTorch（官方 CPU 索引，避免 PyPI 默认携带 CUDA 依赖及镜像哈希问题）
 RUN pip3 install --no-cache-dir \
     torch torchaudio \
-    --index-url https://download.pytorch.org/whl/cu121
+    --index-url https://download.pytorch.org/whl/cpu
 
 # 2. 安装其余依赖（使用阿里云 pip 镜像源加速）
 COPY requirements.txt .
@@ -61,12 +60,11 @@ ENV MODELSCOPE_CACHE=/app/funasr-cache
 
 # ============ 运行时环境变量 ============
 # 可在 docker run 时通过 -e 覆盖
-ENV DEVICE=cuda
-ENV COMPUTE_TYPE=float16
-ENV WHISPER_MODEL=large-v3
+ENV DEVICE=cpu
+ENV COMPUTE_TYPE=int8
+ENV WHISPER_MODEL=large-v3-turbo
 ENV DOWNLOAD_TIMEOUT=600
-ENV BATCH_SIZE=24
-ENV GPU_DEVICES=0,1
+ENV BATCH_SIZE=8
 
 EXPOSE 8000
 

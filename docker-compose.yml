@@ -21,7 +21,7 @@ services:
       MYSQL_DATABASE: automatic_notes
       LANG: C.UTF-8
     ports:
-      - "3306:3306"
+      - "3307:3306"   # 宿主端口改 3307，避免与本机 MySQL 的 3306 冲突
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
@@ -77,13 +77,15 @@ services:
       # 默认 CPU 模式，有 GPU 的话改成 DEVICE=cuda / COMPUTE_TYPE=float16
       DEVICE: cpu
       COMPUTE_TYPE: int8
-      WHISPER_MODEL: large-v3-turbo
+      # 直接指向本地已下载的模型目录，避免启动时联网下载
+      WHISPER_MODEL: /app/models/models/mobiuslabsgmbh--faster-whisper-large-v3-turbo
       BATCH_SIZE: 8
       GPU_DEVICES: "0"
       DOWNLOAD_TIMEOUT: "600"
       HF_ENDPOINT: https://hf-mirror.com
+      HF_HUB_DISABLE_XET: "1"
     volumes:
-      - whisper-models:/app/models
+      - ./whisper-models:/app/models
       - whisper-funasr-cache:/app/funasr-cache
     healthcheck:
       test: ["CMD", "python3", "-c", "import requests; r=requests.get('http://localhost:8000/health'); exit(0 if r.status_code==200 else 1)"]

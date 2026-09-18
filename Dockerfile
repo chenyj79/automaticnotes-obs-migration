@@ -5,11 +5,12 @@ WORKDIR /app
 
 # 先复制 pom.xml 单独下载依赖（利用 Docker 缓存）
 COPY pom.xml .
-RUN mvn dependency:go-offline -B
+COPY settings.xml .
+RUN mvn dependency:go-offline -B -s settings.xml
 
 # 复制源码并打包
 COPY src ./src
-RUN mvn package -DskipTests -B
+RUN mvn package -DskipTests -B -s settings.xml
 
 # ===== Stage 2: 运行环境 =====
 FROM eclipse-temurin:17-jre-alpine
